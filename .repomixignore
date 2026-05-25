@@ -1,0 +1,20 @@
+# Nunca incluir secretos
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+
+# No incluir archivos generados grandes
+build/
+.dart_tool/
+__pycache__/
+venv/
+.venv/
+
+# No incluir estado local
+backend/usuarios_db.json
+
+# No incluir outputs previos de repomix
+repomix-output.xml

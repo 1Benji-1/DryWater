@@ -1,0 +1,7 @@
+id_inmueble,id_propietario,tipo_operacion,tipo_inmueble,zona,precio_bs,amenidades,imagenes
+INM-001,CI-89231,Alquiler,Departamento,Equipetrol,3500,Piscina|Gimnasio|Amoblado|Balcón,url_img1.jpg
+INM-002,CI-44512,Alquiler,Casa,Zona Norte,4200,Mascotas|Churrasquera|Jardín|Garaje,url_img2.jpg
+INM-003,CI-89231,Venta,Terreno,Urubó,150000,Seguridad Privada|Club House,url_img3.jpg
+INM-004,CI-77190,Alquiler,Departamento,Centro,2800,Mascotas|Amoblado,url_img4.jpg
+INM-005,CI-33211,Venta,Casa,Equipetrol,850000,Piscina|Churrasquera|Mascotas|Balcón|Garaje,url_img5.jpg
+INM-006,CI-44512,Alquiler,Departamento,Zona Sur,2100,Parqueo,url_img6.jpg
