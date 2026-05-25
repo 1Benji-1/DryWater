@@ -264,13 +264,13 @@ class SupabasePropertyRepository:
     # ========================================================
 
     def list_amenity_names(self) -> list[str]:
-        """Lista amenidades disponibles."""
+        """Lista amenities disponibles."""
 
         response = self.client.table("amenities").select("name").order("name").execute()
         return [str(row["name"]) for row in (response.data or [])]
 
     def _get_or_create_amenity_ids(self, names: list[str]) -> list[str]:
-        """Obtiene IDs de amenidades, creando las que no existan."""
+        """Obtiene IDs de amenities, creando las que no existan."""
 
         clean_names = sorted({name.strip() for name in names if name.strip()})
         if not clean_names:
@@ -296,7 +296,7 @@ class SupabasePropertyRepository:
         property_id: str,
         amenity_names: list[str],
     ) -> None:
-        """Reemplaza amenidades asociadas a una propiedad."""
+        """Reemplaza amenities asociadas a una propiedad."""
 
         self.client.table("property_amenities").delete().eq(
             "property_id", property_id

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../models/property.dart';
+import '../features/properties/domain/entities/property.dart';
 import '../services/api_service.dart';
 
 class PropertyDetailScreen extends StatefulWidget {
@@ -107,7 +107,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
 
   Widget _buildAmenities(Property property) {
     if (property.amenities.isEmpty) {
-      return const Text('Sin amenidades registradas.');
+      return const Text('Sin comodidades registradas.');
     }
 
     return Wrap(
@@ -192,7 +192,8 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                       children: [
                         const Icon(Icons.home_work_outlined),
                         const SizedBox(width: 6),
-                        Text('${property.propertyType} · ${property.operationType}'),
+                        Text(
+                            '${property.propertyType} · ${property.operationType}'),
                       ],
                     ),
                     const Divider(height: 32),

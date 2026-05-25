@@ -1,3 +1,4 @@
+
 """Rutas v1 de Rent App API conectadas a Supabase."""
 
 from typing import Any
@@ -6,16 +7,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import CurrentUser, get_current_user
 from app.domain.market.analyzer import MarketAnalyzer
-from app.domain.matching.matcher import MatchMaker
 from app.infrastructure.repositories.property_repo import repo_inmuebles
-from app.schemas.common import PaginationMeta
+from app.schemas.common import PaginationMeta, SuccessResponse
 from app.schemas.market import (
     MarketEvaluationRequest,
     MarketEvaluationResponse,
     MarketStatisticsResponse,
     QuartilesResponse,
 )
-from app.schemas.match import MatchListResponse, MatchRequest
+from app.schemas.match import MatchListResponse
 from app.schemas.onboarding import OnboardingRequest, OnboardingResponse
 from app.schemas.owner_property import (
     MatchStatusUpdateRequest,
@@ -56,27 +56,27 @@ def build_pagination(page: int, page_size: int, total: int) -> PaginationMeta:
     )
 
 
-def normalizar_stats(
+def build_market_statistics(
     stats: dict[str, Any],
     sample_size: int,
-    precios: list[float],
+    prices: list[float],
 ) -> MarketStatisticsResponse:
-    """Convierte stats heredadas del dominio a un schema estable."""
+    """Convierte estadísticas del dominio al schema público de la API."""
 
-    cuartiles = stats.get("cuartiles", {})
-    precios_ordenados = sorted(precios)
+    quartiles = stats.get("quartiles", {})
+    sorted_prices = sorted(prices)
 
     return MarketStatisticsResponse(
-        mean=stats.get("media", 0),
-        median=cuartiles.get("Q2"),
-        min_price=precios_ordenados[0] if precios_ordenados else None,
-        max_price=precios_ordenados[-1] if precios_ordenados else None,
-        standard_deviation=stats.get("desviacion_std"),
-        coefficient_of_variation=stats.get("cv"),
+        mean=float(stats.get("mean", 0)),
+        median=quartiles.get("q2"),
+        min_price=sorted_prices[0] if sorted_prices else None,
+        max_price=sorted_prices[-1] if sorted_prices else None,
+        standard_deviation=stats.get("standard_deviation"),
+        coefficient_of_variation=stats.get("coefficient_of_variation"),
         quartiles=QuartilesResponse(
-            q1=cuartiles.get("Q1", 0),
-            q2=cuartiles.get("Q2", 0),
-            q3=cuartiles.get("Q3", 0),
+            q1=float(quartiles.get("q1", 0)),
+            q2=float(quartiles.get("q2", 0)),
+            q3=float(quartiles.get("q3", 0)),
         ),
         sample_size=sample_size,
     )
@@ -173,14 +173,14 @@ async def iniciar_onboarding(
 
     repo_inmuebles.upsert_user_preferences(
         user_id=current_user.id,
-        max_budget=request.presupuesto_max,
-        operation_type=request.tipo_operacion,
-        preferred_zone=request.zona_preferida,
+        max_budget=request.budget,
+        operation_type=request.operation_type,
+        preferred_zone=request.preferred_zone,
     )
 
     available = repo_inmuebles.count_available_for_preferences(
-        max_budget=request.presupuesto_max,
-        operation_type=request.tipo_operacion,
+        max_budget=request.budget,
+        operation_type=request.operation_type,
     )
 
     return OnboardingResponse(
@@ -191,10 +191,10 @@ async def iniciar_onboarding(
 
 
 @router.get("/amenities", response_model=list[str])
-async def listar_amenidades(
+async def listar_amenities(
     current_user: CurrentUser = Depends(get_current_user),
 ) -> list[str]:
-    """Lista amenidades disponibles para formularios."""
+    """Lista amenities disponibles para formularios."""
 
     return repo_inmuebles.list_amenity_names()
 
@@ -324,11 +324,14 @@ async def actualizar_estado_propiedad_owner(
     return PropertyDetailResponse.from_supabase_row(row)
 
 
-@router.delete("/owner/properties/{property_id}")
+@router.delete(
+    "/owner/properties/{property_id}",
+    response_model=SuccessResponse,
+)
 async def eliminar_propiedad_owner(
     property_id: str,
     current_user: CurrentUser = Depends(get_current_user),
-) -> dict[str, str]:
+) -> SuccessResponse:
     """Oculta una propiedad propia."""
 
     ensure_owner(current_user)
@@ -344,7 +347,7 @@ async def eliminar_propiedad_owner(
             detail="La propiedad no existe o no te pertenece.",
         )
 
-    return {"status": "success", "message": "Propiedad ocultada correctamente."}
+    return SuccessResponse(message="Propiedad ocultada correctamente.")
 
 
 # ========================================================
@@ -380,30 +383,13 @@ async def registrar_swipe(
     )
 
 
-@router.post("/interaccion", response_model=SwipeResponse)
-async def registrar_interaccion_legacy(
-    swipe: SwipeRequest,
-    current_user: CurrentUser = Depends(get_current_user),
-) -> SwipeResponse:
-    """Endpoint heredado temporal para compatibilidad."""
-
-    return await registrar_swipe(swipe=swipe, current_user=current_user)
-
-
-@router.get("/matches/{user_id}", response_model=MatchListResponse)
+@router.get("/matches", response_model=MatchListResponse)
 async def obtener_matches_usuario(
-    user_id: str,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     current_user: CurrentUser = Depends(get_current_user),
 ) -> MatchListResponse:
     """Devuelve propiedades likeadas por el usuario autenticado."""
-
-    if user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No puedes consultar matches de otro usuario.",
-        )
 
     rows, total = repo_inmuebles.list_match_cards(
         user_id=current_user.id,
@@ -452,12 +438,15 @@ async def obtener_matches_propietario(
     )
 
 
-@router.patch("/matches/{match_id}/status")
+@router.patch(
+    "/matches/{match_id}/status",
+    response_model=SuccessResponse,
+)
 async def actualizar_estado_match(
     match_id: str,
     request: MatchStatusUpdateRequest,
     current_user: CurrentUser = Depends(get_current_user),
-) -> dict[str, str]:
+) -> SuccessResponse:
     """Actualiza estado active/contacted/archived."""
 
     updated = repo_inmuebles.update_match_status(
@@ -472,45 +461,7 @@ async def actualizar_estado_match(
             detail="El match no existe o no te pertenece.",
         )
 
-    return {"status": "success", "message": "Match actualizado correctamente."}
-
-
-@router.post("/match")
-def calcular_match(
-    request: MatchRequest,
-    current_user: CurrentUser = Depends(get_current_user),
-) -> dict[str, list[dict]]:
-    """Endpoint académico de compatibilidad por conjuntos."""
-
-    rows = repo_inmuebles.list_available_cards()
-    legacy_like_rows = []
-
-    for row in rows:
-        legacy_like_rows.append(
-            {
-                "id_inmueble": row.get("id"),
-                "precio_bs": row.get("price"),
-                "amenidades": "|".join(row.get("amenities") or []),
-                "zona": row.get("zone"),
-                "tipo_operacion": row.get("operation_type"),
-                "tipo_inmueble": row.get("property_type"),
-            }
-        )
-
-    class _AmenityMatrixAdapter:
-        def obtener_amenidades_de_inmueble(self, property_id: str) -> set[str]:
-            for row in rows:
-                if str(row.get("id")) == property_id:
-                    return set(row.get("amenities") or [])
-            return set()
-
-    resultados = MatchMaker.buscar_mejores_opciones(
-        requisitos_cliente=set(request.requisitos),
-        presupuesto_max=request.presupuesto_max,
-        todos_los_inmuebles=legacy_like_rows,
-        matriz_amenidades=_AmenityMatrixAdapter(),
-    )
-    return {"matches": resultados}
+    return SuccessResponse(message="Match actualizado correctamente.")
 
 
 # ========================================================
@@ -541,6 +492,7 @@ def evaluar_precio_mercado(
     evaluacion = MarketAnalyzer.evaluar_precio(request.price, stats)
 
     return MarketEvaluationResponse(
-        statistical_analysis=normalizar_stats(stats, len(precios), precios),
+        statistical_analysis=build_market_statistics(stats, len(precios), precios),
         price_verdict=evaluacion,
     )
+

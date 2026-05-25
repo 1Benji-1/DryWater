@@ -5,7 +5,7 @@ import '../core/constants/app_constants.dart';
 import '../core/network/paginated_response.dart';
 import '../features/market/data/dto/market_evaluation_dto.dart';
 import '../features/properties/data/dto/property_dto.dart';
-import '../models/property.dart';
+import '../features/properties/domain/entities/property.dart';
 
 /// Cliente HTTP centralizado para FastAPI.
 class ApiService {
@@ -107,9 +107,9 @@ class ApiService {
         '/api/v1/onboarding',
         options: _authOptions(),
         data: {
-          'presupuesto_max': budget,
-          'tipo_operacion': operationType,
-          'zona_preferida': preferredZone,
+          'budget': budget,
+          'operation_type': operationType,
+          'preferred_zone': preferredZone,
         },
       );
 
@@ -216,10 +216,10 @@ class ApiService {
     }
   }
 
-  Future<List<Property>> fetchMatches(String userId) async {
+  Future<List<Property>> fetchMatches() async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
-        '/api/v1/matches/$userId',
+        '/api/v1/matches',
         options: _authOptions(),
         queryParameters: {
           'page': 1,

@@ -171,7 +171,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   style: TextStyle(color: Colors.grey[700], fontSize: 18),
                 ),
                 const SizedBox(height: 28),
-
                 if (!_isLoginMode) ...[
                   TextField(
                     controller: _nameController,
@@ -183,7 +182,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 14),
                 ],
-
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -194,7 +192,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
                 const SizedBox(height: 14),
-
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
@@ -204,9 +201,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     border: OutlineInputBorder(),
                   ),
                 ),
-
                 const SizedBox(height: 18),
-
                 if (_errorMessage != null) ...[
                   Text(
                     _errorMessage!,
@@ -218,7 +213,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
-
                 if (_successMessage != null) ...[
                   Text(
                     _successMessage!,
@@ -230,7 +224,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   const SizedBox(height: 12),
                 ],
-
                 ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
                   child: Padding(
@@ -244,17 +237,13 @@ class _AuthScreenState extends State<AuthScreen> {
                         : Text(buttonText),
                   ),
                 ),
-
                 const SizedBox(height: 14),
-
                 OutlinedButton.icon(
                   onPressed: _isLoading ? null : _signInWithGoogle,
                   icon: const Icon(Icons.login),
                   label: const Text('Continuar con Google'),
                 ),
-
                 const SizedBox(height: 12),
-
                 TextButton(
                   onPressed: _isLoading ? null : _toggleMode,
                   child: Text(switchText),

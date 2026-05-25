@@ -10,7 +10,8 @@ class OwnerPropertyFormScreen extends StatefulWidget {
   const OwnerPropertyFormScreen({super.key});
 
   @override
-  State<OwnerPropertyFormScreen> createState() => _OwnerPropertyFormScreenState();
+  State<OwnerPropertyFormScreen> createState() =>
+      _OwnerPropertyFormScreenState();
 }
 
 class _OwnerPropertyFormScreenState extends State<OwnerPropertyFormScreen> {
@@ -327,7 +328,8 @@ class _OwnerPropertyFormScreenState extends State<OwnerPropertyFormScreen> {
                     border: OutlineInputBorder(),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'Alquiler', child: Text('Alquiler')),
+                    DropdownMenuItem(
+                        value: 'Alquiler', child: Text('Alquiler')),
                     DropdownMenuItem(value: 'Venta', child: Text('Venta')),
                   ],
                   onChanged: (value) {

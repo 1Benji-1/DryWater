@@ -1,35 +1,19 @@
 """Schemas para evaluación estadística de mercado."""
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
 class MarketEvaluationRequest(BaseModel):
-    """Solicitud de análisis de mercado para una propiedad.
+    """Solicitud de análisis de mercado para una propiedad."""
 
-    Acepta nombres nuevos (`price`, `operation_type`) y heredados
-    (`precio`, `tipo_operacion`) durante la migración.
-    """
-
-    model_config = ConfigDict(populate_by_name=True)
-
-    price: float = Field(
-        ...,
-        gt=0,
-        validation_alias=AliasChoices("price", "precio"),
-        examples=[3500],
-    )
-    operation_type: str = Field(
-        ...,
-        min_length=1,
-        validation_alias=AliasChoices("operation_type", "tipo_operacion"),
-        examples=["Alquiler"],
-    )
+    price: float = Field(..., gt=0, examples=[3500])
+    operation_type: str = Field(..., min_length=1, examples=["Alquiler"])
     zone: str | None = Field(default=None, examples=["Equipetrol"])
     property_type: str | None = Field(default=None, examples=["Departamento"])
 
 
 class QuartilesResponse(BaseModel):
-    """Cuartiles normalizados para evitar `stats['Q1']` suelto en Flutter."""
+    """Cuartiles normalizados para Flutter."""
 
     q1: float
     q2: float
@@ -54,3 +38,4 @@ class MarketEvaluationResponse(BaseModel):
 
     statistical_analysis: MarketStatisticsResponse
     price_verdict: str
+

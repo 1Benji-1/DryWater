@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/owner_dashboard/presentation/dashboard_screen.dart';
-import '../models/property.dart';
+import '../features/properties/domain/entities/property.dart';
 import '../providers/property_provider.dart';
 import '../services/api_service.dart';
 import 'onboarding_screen.dart';
@@ -66,7 +66,8 @@ class HomeScreen extends ConsumerWidget {
             tooltip: 'Cambiar filtros',
             onPressed: () {
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const OnboardingScreen()),
               );
             },
           ),
@@ -94,7 +95,8 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(height: 20),
                     const Text(
                       '¡Viste todas las opciones!',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
@@ -145,11 +147,15 @@ class HomeScreen extends ConsumerWidget {
                     final api = ApiService();
 
                     if (activity.direction == AxisDirection.right) {
-                      api.sendSwipeAction(propertyId, 'like').catchError((error) {
+                      api
+                          .sendSwipeAction(propertyId, 'like')
+                          .catchError((error) {
                         debugPrint('Error enviando like: $error');
                       });
                     } else if (activity.direction == AxisDirection.left) {
-                      api.sendSwipeAction(propertyId, 'nope').catchError((error) {
+                      api
+                          .sendSwipeAction(propertyId, 'nope')
+                          .catchError((error) {
                         debugPrint('Error enviando nope: $error');
                       });
                     }
@@ -220,7 +226,8 @@ class PropertyCard extends StatelessWidget {
               }
 
               if (snapshot.hasError) {
-                return Text('Error al calcular estadísticas: ${snapshot.error}');
+                return Text(
+                    'Error al calcular estadísticas: ${snapshot.error}');
               }
 
               final data = snapshot.data;
@@ -247,14 +254,18 @@ class PropertyCard extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  Text('Muestra analizada: ${data.statistics.sampleSize} inmuebles'),
+                  Text(
+                      'Muestra analizada: ${data.statistics.sampleSize} inmuebles'),
                   Text('Promedio: ${data.statistics.mean} Bs'),
-                  Text('Más baratos (Q1): ${data.statistics.quartiles.q1} Bs'),
-                  Text('Más caros (Q3): ${data.statistics.quartiles.q3} Bs'),
+                  Text(
+                      'Rango bajo del mercado: ${data.statistics.quartiles.q1} Bs'),
+                  Text(
+                      'Rango alto del mercado: ${data.statistics.quartiles.q3} Bs'),
                   const SizedBox(height: 15),
                   Text(
                     'Este inmueble cuesta: ${property.price} Bs',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ],
               );
@@ -298,7 +309,8 @@ class PropertyCard extends StatelessWidget {
                   return Container(
                     color: Colors.grey[300],
                     child: const Center(
-                      child: Icon(Icons.home_work, size: 60, color: Colors.grey),
+                      child:
+                          Icon(Icons.home_work, size: 60, color: Colors.grey),
                     ),
                   );
                 },

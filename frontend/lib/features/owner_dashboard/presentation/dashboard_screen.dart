@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../models/property.dart';
+import '../../properties/domain/entities/property.dart';
 import '../../../providers/property_provider.dart';
 import '../../../screens/property_detail_screen.dart';
 import '../../../services/api_service.dart';
@@ -17,7 +17,7 @@ final matchesProvider = FutureProvider<List<Property>>((ref) async {
   if (userId.isEmpty) return [];
 
   final api = ref.watch(apiServiceProvider);
-  return api.fetchMatches(userId);
+  return api.fetchMatches();
 });
 
 final ownerPropertiesProvider = FutureProvider<List<Property>>((ref) async {
@@ -325,7 +325,8 @@ class DashboardScreen extends ConsumerWidget {
                                       spacing: 8,
                                       children: [
                                         OutlinedButton(
-                                          onPressed: () => _changePropertyStatus(
+                                          onPressed: () =>
+                                              _changePropertyStatus(
                                             context,
                                             ref,
                                             property,
@@ -334,7 +335,8 @@ class DashboardScreen extends ConsumerWidget {
                                           child: const Text('Disponible'),
                                         ),
                                         OutlinedButton(
-                                          onPressed: () => _changePropertyStatus(
+                                          onPressed: () =>
+                                              _changePropertyStatus(
                                             context,
                                             ref,
                                             property,
@@ -343,13 +345,15 @@ class DashboardScreen extends ConsumerWidget {
                                           child: const Text('Reservado'),
                                         ),
                                         OutlinedButton(
-                                          onPressed: () => _changePropertyStatus(
+                                          onPressed: () =>
+                                              _changePropertyStatus(
                                             context,
                                             ref,
                                             property,
                                             'sold',
                                           ),
-                                          child: const Text('Vendido/Alquilado'),
+                                          child:
+                                              const Text('Vendido/Alquilado'),
                                         ),
                                         TextButton.icon(
                                           onPressed: () => _deleteProperty(
@@ -557,7 +561,8 @@ class _ActivateOwnerView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.real_estate_agent, size: 70, color: Colors.green),
+                const Icon(Icons.real_estate_agent,
+                    size: 70, color: Colors.green),
                 const SizedBox(height: 16),
                 const Text(
                   'Activa el modo propietario',

@@ -1,16 +1,9 @@
-"""Schemas para matches y cálculo de compatibilidad."""
+"""Schemas para matches."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.schemas.common import PaginationMeta
 from app.schemas.property import PropertySummaryResponse
-
-
-class MatchRequest(BaseModel):
-    """Solicitud académica para calcular mejores opciones por requisitos."""
-
-    presupuesto_max: float = Field(..., gt=0, examples=[4000])
-    requisitos: list[str] = Field(default_factory=list, examples=[["Piscina", "Gimnasio"]])
 
 
 class MatchListResponse(BaseModel):
@@ -18,3 +11,4 @@ class MatchListResponse(BaseModel):
 
     items: list[PropertySummaryResponse]
     pagination: PaginationMeta
+

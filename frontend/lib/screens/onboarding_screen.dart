@@ -135,7 +135,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   style: TextStyle(color: Colors.grey[700]),
                 ),
                 const SizedBox(height: 28),
-
                 const Text(
                   '¿Qué buscas?',
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -160,9 +159,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     const Text('Comprar'),
                   ],
                 ),
-
                 const SizedBox(height: 15),
-
                 TextField(
                   controller: _budgetController,
                   keyboardType: TextInputType.number,
@@ -171,9 +168,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     border: OutlineInputBorder(),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 const Text(
                   'Zona de inicio preferida:',
                   style: TextStyle(fontWeight: FontWeight.bold),
@@ -193,9 +188,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     }
                   },
                 ),
-
                 const SizedBox(height: 24),
-
                 if (mensajeError != null) ...[
                   Text(
                     mensajeError!,
@@ -207,10 +200,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                   const SizedBox(height: 16),
                 ],
-
                 ElevatedButton(
                   onPressed: _isLoading ? null : _procesarOnboarding,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  style:
+                      ElevatedButton.styleFrom(backgroundColor: Colors.green),
                   child: Padding(
                     padding: const EdgeInsets.all(15),
                     child: _isLoading

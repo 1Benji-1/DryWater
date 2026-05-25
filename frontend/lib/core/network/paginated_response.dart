@@ -26,10 +26,7 @@ class PaginatedResponse<T> {
     final rawItems = json['items'];
 
     final items = rawItems is List
-        ? rawItems
-            .whereType<Map<String, dynamic>>()
-            .map(itemFromJson)
-            .toList()
+        ? rawItems.whereType<Map<String, dynamic>>().map(itemFromJson).toList()
         : <T>[];
 
     return PaginatedResponse<T>(

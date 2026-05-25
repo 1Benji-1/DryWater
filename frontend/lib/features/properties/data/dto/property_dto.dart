@@ -6,8 +6,18 @@ part 'property_dto.freezed.dart';
 
 /// DTO de propiedad recibido desde FastAPI.
 ///
-/// Usa Freezed para inmutabilidad, pero el parseo JSON se hace manualmente
-/// para soportar tanto el contrato nuevo como campos heredados del CSV.
+/// Contrato único oficial:
+/// - id
+/// - title
+/// - description
+/// - price
+/// - currency
+/// - operation_type
+/// - property_type
+/// - zone
+/// - image_url
+/// - images
+/// - amenities
 @freezed
 class PropertyDto with _$PropertyDto {
   const PropertyDto._();
@@ -27,20 +37,21 @@ class PropertyDto with _$PropertyDto {
   }) = _PropertyDto;
 
   factory PropertyDto.fromJson(Map<String, dynamic> json) {
-    final normalized = _normalizeJson(json);
+    final imageUrl = _readRequiredString(json, 'image_url');
+    final images = _readStringList(json['images']);
 
     return PropertyDto(
-      id: normalized['id'] as String,
-      title: normalized['title'] as String,
-      description: normalized['description'] as String,
-      price: normalized['price'] as double,
-      currency: normalized['currency'] as String,
-      operationType: normalized['operation_type'] as String,
-      propertyType: normalized['property_type'] as String,
-      zone: normalized['zone'] as String,
-      imageUrl: normalized['image_url'] as String,
-      imageUrls: List<String>.from(normalized['image_urls'] as List),
-      amenities: List<String>.from(normalized['amenities'] as List),
+      id: _readRequiredString(json, 'id'),
+      title: _readRequiredString(json, 'title'),
+      description: _readRequiredString(json, 'description'),
+      price: _readRequiredDouble(json, 'price'),
+      currency: _readString(json['currency'], fallback: 'BOB'),
+      operationType: _readRequiredString(json, 'operation_type'),
+      propertyType: _readRequiredString(json, 'property_type'),
+      zone: _readRequiredString(json, 'zone'),
+      imageUrl: imageUrl,
+      imageUrls: images.isEmpty ? [imageUrl] : images,
+      amenities: _readStringList(json['amenities']),
     );
   }
 
@@ -60,56 +71,33 @@ class PropertyDto with _$PropertyDto {
     );
   }
 
-  static Map<String, dynamic> _normalizeJson(Map<String, dynamic> json) {
-    final amenities = _readStringList(json['amenities'])
-        .ifEmpty(_splitLegacyText(json['amenidades']));
+  static String _readRequiredString(
+    Map<String, dynamic> json,
+    String key,
+  ) {
+    final value = _readString(json[key]);
 
-    final images = _readStringList(json['images'])
-        .ifEmpty(_readStringList(json['image_urls']))
-        .ifEmpty(_splitLegacyText(json['imagenes']))
-        .ifEmpty([_readString(json['image_url'] ?? json['imagen_url'])])
-        .where((value) => value.isNotEmpty)
-        .toList();
+    if (value.isEmpty) {
+      throw FormatException('Campo requerido faltante o vacío: $key');
+    }
 
-    final fallbackImage = images.isNotEmpty
-        ? images.first
-        : 'https://via.placeholder.com/800x600.png?text=Rent+App';
+    return value;
+  }
 
-    final propertyType = _readString(
-      json['property_type'] ?? json['tipo_inmueble'],
-      fallback: 'Inmueble',
-    );
+  static double _readRequiredDouble(
+    Map<String, dynamic> json,
+    String key,
+  ) {
+    final value = json[key];
 
-    final zone = _readString(
-      json['zone'] ?? json['zona'],
-      fallback: 'Sin zona',
-    );
+    if (value is num) return value.toDouble();
 
-    return {
-      'id': _readString(json['id'] ?? json['id_inmueble'], fallback: 'N/A'),
-      'title': _readString(
-        json['title'] ?? json['titulo'],
-        fallback: '$propertyType en $zone',
-      ),
-      'description': _readString(
-        json['description'] ?? json['descripcion'],
-        fallback: amenities.isEmpty ? 'Sin descripción' : amenities.join(', '),
-      ),
-      'price': _readDouble(json['price'] ?? json['precio_bs']),
-      'currency': _readString(json['currency'], fallback: 'BOB'),
-      'operation_type': _readString(
-        json['operation_type'] ?? json['tipo_operacion'],
-        fallback: 'Alquiler',
-      ),
-      'property_type': propertyType,
-      'zone': zone,
-      'image_url': _readString(
-        json['image_url'] ?? json['imagen_url'],
-        fallback: fallbackImage,
-      ),
-      'image_urls': images.isEmpty ? [fallbackImage] : images,
-      'amenities': amenities,
-    };
+    final parsed = double.tryParse(value?.toString() ?? '');
+    if (parsed == null) {
+      throw FormatException('Campo numérico inválido: $key');
+    }
+
+    return parsed;
   }
 
   static String _readString(Object? value, {String fallback = ''}) {
@@ -119,11 +107,6 @@ class PropertyDto with _$PropertyDto {
     return result.isEmpty ? fallback : result;
   }
 
-  static double _readDouble(Object? value) {
-    if (value is num) return value.toDouble();
-    return double.tryParse(value?.toString() ?? '') ?? 0;
-  }
-
   static List<String> _readStringList(Object? value) {
     if (value is! List) return [];
 
@@ -131,22 +114,5 @@ class PropertyDto with _$PropertyDto {
         .map((item) => item.toString().trim())
         .where((item) => item.isNotEmpty)
         .toList();
-  }
-
-  static List<String> _splitLegacyText(Object? value) {
-    if (value == null) return [];
-
-    return value
-        .toString()
-        .split('|')
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-  }
-}
-
-extension _ListFallbackExtension<T> on List<T> {
-  List<T> ifEmpty(List<T> fallback) {
-    return isEmpty ? fallback : this;
   }
 }

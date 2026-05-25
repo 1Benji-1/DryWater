@@ -9,16 +9,16 @@ class MarketEvaluationResult {
   });
 
   factory MarketEvaluationResult.fromJson(Map<String, dynamic> json) {
-    final rawStats = json['statistical_analysis'] ??
-        json['analisis_estadistico'] ??
-        const <String, dynamic>{};
+    final rawStats = json['statistical_analysis'];
+
+    if (rawStats is! Map<String, dynamic>) {
+      throw const FormatException(
+          'Campo requerido inválido: statistical_analysis');
+    }
 
     return MarketEvaluationResult(
-      statistics: MarketStatistics.fromJson(
-        rawStats is Map<String, dynamic> ? rawStats : const {},
-      ),
-      priceVerdict: (json['price_verdict'] ?? json['veredicto_precio'] ?? '')
-          .toString(),
+      statistics: MarketStatistics.fromJson(rawStats),
+      priceVerdict: _readRequiredString(json, 'price_verdict'),
     );
   }
 }
@@ -45,25 +45,23 @@ class MarketStatistics {
   });
 
   factory MarketStatistics.fromJson(Map<String, dynamic> json) {
-    final rawQuartiles = json['quartiles'] ??
-        json['cuartiles'] ??
-        const <String, dynamic>{};
+    final rawQuartiles = json['quartiles'];
+
+    if (rawQuartiles is! Map<String, dynamic>) {
+      throw const FormatException('Campo requerido inválido: quartiles');
+    }
 
     return MarketStatistics(
-      mean: _readDouble(json['mean'] ?? json['media']),
+      mean: _readRequiredDouble(json, 'mean'),
       median: _readNullableDouble(json['median']),
       minPrice: _readNullableDouble(json['min_price']),
       maxPrice: _readNullableDouble(json['max_price']),
-      standardDeviation: _readNullableDouble(
-        json['standard_deviation'] ?? json['desviacion_std'],
-      ),
+      standardDeviation: _readNullableDouble(json['standard_deviation']),
       coefficientOfVariation: _readNullableDouble(
-        json['coefficient_of_variation'] ?? json['cv'],
+        json['coefficient_of_variation'],
       ),
-      quartiles: MarketQuartiles.fromJson(
-        rawQuartiles is Map<String, dynamic> ? rawQuartiles : const {},
-      ),
-      sampleSize: _readInt(json['sample_size']),
+      quartiles: MarketQuartiles.fromJson(rawQuartiles),
+      sampleSize: _readRequiredInt(json, 'sample_size'),
     );
   }
 }
@@ -81,16 +79,34 @@ class MarketQuartiles {
 
   factory MarketQuartiles.fromJson(Map<String, dynamic> json) {
     return MarketQuartiles(
-      q1: _readDouble(json['q1'] ?? json['Q1']),
-      q2: _readDouble(json['q2'] ?? json['Q2']),
-      q3: _readDouble(json['q3'] ?? json['Q3']),
+      q1: _readRequiredDouble(json, 'q1'),
+      q2: _readRequiredDouble(json, 'q2'),
+      q3: _readRequiredDouble(json, 'q3'),
     );
   }
 }
 
-double _readDouble(Object? value) {
+String _readRequiredString(Map<String, dynamic> json, String key) {
+  final value = json[key]?.toString().trim() ?? '';
+
+  if (value.isEmpty) {
+    throw FormatException('Campo requerido faltante o vacío: $key');
+  }
+
+  return value;
+}
+
+double _readRequiredDouble(Map<String, dynamic> json, String key) {
+  final value = json[key];
+
   if (value is num) return value.toDouble();
-  return double.tryParse(value?.toString() ?? '') ?? 0;
+
+  final parsed = double.tryParse(value?.toString() ?? '');
+  if (parsed == null) {
+    throw FormatException('Campo numérico inválido: $key');
+  }
+
+  return parsed;
 }
 
 double? _readNullableDouble(Object? value) {
@@ -99,8 +115,16 @@ double? _readNullableDouble(Object? value) {
   return double.tryParse(value.toString());
 }
 
-int _readInt(Object? value) {
+int _readRequiredInt(Map<String, dynamic> json, String key) {
+  final value = json[key];
+
   if (value is int) return value;
   if (value is num) return value.toInt();
-  return int.tryParse(value?.toString() ?? '') ?? 0;
+
+  final parsed = int.tryParse(value?.toString() ?? '');
+  if (parsed == null) {
+    throw FormatException('Campo entero inválido: $key');
+  }
+
+  return parsed;
 }

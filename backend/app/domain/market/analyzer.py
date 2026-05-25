@@ -1,63 +1,77 @@
 # Archivo: backend/app/domain/market/analyzer.py
 import math
 
+
 class MarketAnalyzer:
     @staticmethod
-    def calcular_estadisticas_zona(precios: list) -> dict:
-        """Calcula medidas de tendencia central, dispersión y posición."""
-        if not precios:
-            return None
-            
-        n = len(precios)
-        precios.sort()
-        
-        # Media (Promedio)
-        media = sum(precios) / n
-        
-        # Varianza y Desviación Estándar (Dispersión)
-        varianza = sum((x - media) ** 2 for x in precios) / n
-        desviacion_std = math.sqrt(varianza)
-        
-        # Coeficiente de Variación (Homogeneidad de la zona)
-        cv = (desviacion_std / media) * 100 if media > 0 else 0
-        
-        # Cuartiles (Posición)
-        def obtener_percentil(p):
-            k = (n - 1) * p
-            f = math.floor(k)
-            c = math.ceil(k)
-            if f == c:
-                return precios[int(k)]
-            return precios[int(f)] * (c - k) + precios[int(c)] * (k - f)
+    def calcular_estadisticas_zona(prices: list[float]) -> dict:
+        """Calcula medidas estadísticas de precios comparables."""
 
-        q1 = obtener_percentil(0.25)
-        mediana = obtener_percentil(0.50)
-        q3 = obtener_percentil(0.75)
-        
-        # Asimetría Simple
-        sesgo = "Simétrica"
-        if media > mediana:
-            sesgo = "Asimetría Positiva (Inclinación a precios caros)"
-        elif media < mediana:
-            sesgo = "Asimetría Negativa (Inclinación a precios baratos)"
-            
-        return {
-            "media": round(media, 2),
-            "desviacion_std": round(desviacion_std, 2),
-            "cv": round(cv, 2),
-            "cuartiles": {"Q1": q1, "Q2": mediana, "Q3": q3},
-            "sesgo": sesgo
-        }
-        
-    @staticmethod
-    def evaluar_precio(precio_evaluar: float, stats: dict) -> str:
-        """Cruza los Cuartiles con la Desviación Estándar para clasificar el precio."""
-        limite_inferior = stats["media"] - stats["desviacion_std"]
-        limite_superior = stats["media"] + stats["desviacion_std"]
-        
-        if precio_evaluar <= stats["cuartiles"]["Q1"] and precio_evaluar < limite_inferior:
-            return "¡Posible Ganga!"
-        elif precio_evaluar >= stats["cuartiles"]["Q3"] and precio_evaluar > limite_superior:
-            return "Precio Elevado"
+        if not prices:
+            return {}
+
+        sorted_prices = sorted(float(price) for price in prices)
+        total = len(sorted_prices)
+
+        mean = sum(sorted_prices) / total
+        variance = sum((price - mean) ** 2 for price in sorted_prices) / total
+        standard_deviation = math.sqrt(variance)
+        coefficient_of_variation = (
+            (standard_deviation / mean) * 100 if mean > 0 else 0
+        )
+
+        def percentile(position: float) -> float:
+            index = (total - 1) * position
+            floor_index = math.floor(index)
+            ceil_index = math.ceil(index)
+
+            if floor_index == ceil_index:
+                return sorted_prices[int(index)]
+
+            return (
+                sorted_prices[floor_index] * (ceil_index - index)
+                + sorted_prices[ceil_index] * (index - floor_index)
+            )
+
+        q1 = percentile(0.25)
+        median = percentile(0.50)
+        q3 = percentile(0.75)
+
+        if mean > median:
+            skewness = "positive"
+        elif mean < median:
+            skewness = "negative"
         else:
-            return "Precio Justo"
+            skewness = "symmetric"
+
+        return {
+            "mean": round(mean, 2),
+            "standard_deviation": round(standard_deviation, 2),
+            "coefficient_of_variation": round(coefficient_of_variation, 2),
+            "quartiles": {
+                "q1": round(q1, 2),
+                "q2": round(median, 2),
+                "q3": round(q3, 2),
+            },
+            "skewness": skewness,
+        }
+
+    @staticmethod
+    def evaluar_precio(price_to_evaluate: float, stats: dict) -> str:
+        """Clasifica un precio usando media, desviación estándar y cuartiles."""
+
+        mean = float(stats["mean"])
+        standard_deviation = float(stats["standard_deviation"])
+        quartiles = stats["quartiles"]
+
+        lower_limit = mean - standard_deviation
+        upper_limit = mean + standard_deviation
+
+        if price_to_evaluate <= quartiles["q1"] and price_to_evaluate < lower_limit:
+            return "possible_bargain"
+
+        if price_to_evaluate >= quartiles["q3"] and price_to_evaluate > upper_limit:
+            return "high_price"
+
+        return "fair_price"
+

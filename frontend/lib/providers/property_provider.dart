@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../models/property.dart';
+import '../features/properties/domain/entities/property.dart';
 import '../services/api_service.dart';
 
 /// ID del usuario autenticado en Supabase.
