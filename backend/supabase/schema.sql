@@ -1,0 +1,3 @@
+-- Rent App - schema.sql
+-- TODO: Pegar aquí el SQL real ejecutado en Supabase para versionarlo en Git.
+-- Este archivo existe para cerrar la trazabilidad Fase 2/Fase 3.

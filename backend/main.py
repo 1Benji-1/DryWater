@@ -3,7 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import router
+from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.schemas.common import ApiError, ErrorResponse
 
@@ -12,7 +12,7 @@ settings = get_settings()
 app = FastAPI(
     title=settings.app_name,
     description=(
-        "API de Rent App. Fase 2 conecta Supabase Auth, "
+        "API de Rent App. Fase 3 usa backend modular, "
         "PostgreSQL y Storage con FastAPI."
     ),
     version=settings.app_version,
@@ -82,7 +82,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content=error.model_dump())
 
 
-app.include_router(router, prefix="/api/v1", tags=["api-v1"])
+app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/health")
