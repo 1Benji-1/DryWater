@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/network/api_exception.dart';
+import '../core/network/dio_client.dart';
 import '../core/network/paginated_response.dart';
 import '../features/market/data/dto/market_evaluation_dto.dart';
 import '../features/properties/data/dto/property_dto.dart';
@@ -9,24 +11,9 @@ import '../features/properties/domain/entities/property.dart';
 
 /// Cliente HTTP centralizado para FastAPI.
 class ApiService {
-  ApiService({Dio? dio}) : _dio = dio ?? _buildDio();
+  ApiService({Dio? dio}) : _dio = dio ?? DioClient.create();
 
   final Dio _dio;
-
-  static Dio _buildDio() {
-    return Dio(
-      BaseOptions(
-        baseUrl: AppConstants.apiBaseUrl,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 20),
-        sendTimeout: const Duration(seconds: 10),
-        headers: const {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ),
-    );
-  }
 
   Options _authOptions() {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
@@ -322,12 +309,14 @@ class ApiService {
       final data = response.data ?? <String, dynamic>{};
       final items = data['items'];
 
-      if (items is! List) return [];
+      if (items is List) {
+        return items
+            .whereType<Map<String, dynamic>>()
+            .map(OwnerMatchItem.fromJson)
+            .toList();
+      }
 
-      return items
-          .whereType<Map<String, dynamic>>()
-          .map(OwnerMatchItem.fromJson)
-          .toList();
+      return [];
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }
@@ -499,54 +488,5 @@ class OwnerMatchItem {
             : <String, dynamic>{},
       ).toEntity(),
     );
-  }
-}
-
-class ApiException implements Exception {
-  final String message;
-  final int? statusCode;
-  final Map<String, dynamic>? details;
-
-  const ApiException({
-    required this.message,
-    this.statusCode,
-    this.details,
-  });
-
-  factory ApiException.fromDio(DioException error) {
-    final statusCode = error.response?.statusCode;
-    final data = error.response?.data;
-
-    if (data is Map<String, dynamic>) {
-      final nestedError = data['error'];
-
-      if (nestedError is Map<String, dynamic>) {
-        return ApiException(
-          message: nestedError['message']?.toString() ??
-              'Error de conexión con el servidor.',
-          statusCode: statusCode,
-          details: data,
-        );
-      }
-
-      return ApiException(
-        message: data['message']?.toString() ??
-            data['detail']?.toString() ??
-            'Error de conexión con el servidor.',
-        statusCode: statusCode,
-        details: data,
-      );
-    }
-
-    return ApiException(
-      message: error.message ?? 'Error de conexión con el servidor.',
-      statusCode: statusCode,
-    );
-  }
-
-  @override
-  String toString() {
-    if (statusCode == null) return message;
-    return '$message (HTTP $statusCode)';
   }
 }

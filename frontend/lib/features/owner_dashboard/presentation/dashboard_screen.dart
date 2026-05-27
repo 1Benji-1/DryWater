@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../properties/domain/entities/property.dart';
 import '../../../providers/property_provider.dart';
-import '../../../screens/property_detail_screen.dart';
+import '../../../core/router/route_names.dart';
 import '../../../services/api_service.dart';
-import 'owner_property_form_screen.dart';
 
 final profileProvider = FutureProvider<UserProfile>((ref) async {
   final api = ref.watch(apiServiceProvider);
@@ -63,11 +63,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Future<void> _openCreateProperty(BuildContext context, WidgetRef ref) async {
-    final created = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (context) => const OwnerPropertyFormScreen(),
-      ),
-    );
+    final created = await context.push<bool>(RouteNames.ownerCreateProperty);
 
     if (created == true) {
       ref.invalidate(ownerPropertiesProvider);
@@ -222,12 +218,9 @@ class DashboardScreen extends ConsumerWidget {
                 isThreeLine: true,
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => PropertyDetailScreen(
-                        propertyId: property.id,
-                      ),
-                    ),
+                  context.pushNamed(
+                    RouteNames.propertyDetailName,
+                    pathParameters: {'id': property.id},
                   );
                 },
               ),
@@ -311,13 +304,9 @@ class DashboardScreen extends ConsumerWidget {
                                       ),
                                       isThreeLine: true,
                                       onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                PropertyDetailScreen(
-                                              propertyId: property.id,
-                                            ),
-                                          ),
+                                        context.pushNamed(
+                                          RouteNames.propertyDetailName,
+                                          pathParameters: {'id': property.id},
                                         );
                                       },
                                     ),
