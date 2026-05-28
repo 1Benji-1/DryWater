@@ -20,6 +20,18 @@ class SwipeRepository:
         )
         return {str(row["property_id"]) for row in (response.data or [])}
 
+    def list_liked_property_ids(self, user_id: str) -> set[str]:
+        """Devuelve IDs de propiedades con like."""
+
+        response = (
+            self.client.table("swipes")
+            .select("property_id")
+            .eq("user_id", user_id)
+            .eq("action", "like")
+            .execute()
+        )
+        return {str(row["property_id"]) for row in (response.data or [])}
+
     def get_last_liked_property_id(self, user_id: str) -> str | None:
         """Obtiene el último inmueble likeado por el usuario."""
 

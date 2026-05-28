@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/router/route_names.dart';
 import '../../../../providers/property_provider.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
+import '../../../properties/presentation/providers/property_feed_controller.dart';
 import '../../domain/entities/onboarding_preferences.dart';
 import '../providers/onboarding_controller.dart';
 
@@ -70,7 +71,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         return;
       }
 
-      ref.invalidate(propertiesProvider);
+      ref.invalidate(propertyFeedProvider);
+      ref.invalidate(propertyFeedProvider);
+    ref.invalidate(propertiesProvider);
 
       if (!mounted) return;
       context.go(RouteNames.home);

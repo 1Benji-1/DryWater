@@ -1,7 +1,7 @@
 """Repositorio de propiedades.
 
-Fase 3: este archivo ya no concentra perfil, swipes, matches ni market.
-Cada recurso vive en su repositorio dedicado.
+Fase 6: el repositorio queda enfocado en acceso a datos. El ranking vive en
+RecommendationService + domain/recommendation/scoring.py.
 """
 
 from app.domain.graphs.city_graph import grafo_scz
@@ -11,6 +11,10 @@ from app.infrastructure.repositories.profile_repo import ProfileRepository
 from app.infrastructure.repositories.property_image_repo import PropertyImageRepository
 from app.infrastructure.repositories.swipe_repo import SwipeRepository
 from app.infrastructure.supabase.client import get_supabase_client
+
+
+ACTIVE_STATUSES = {"available", "published"}
+INACTIVE_STATUSES = {"draft", "paused", "hidden", "rented", "sold", "deleted"}
 
 
 class PropertyRepository:
@@ -25,15 +29,34 @@ class PropertyRepository:
         self.images = PropertyImageRepository()
 
     def list_available_cards(self) -> list[dict]:
-        """Lista propiedades disponibles desde la view normalizada."""
+        """Lista propiedades publicables desde la view normalizada."""
 
-        response = (
-            self.client.table("property_cards")
-            .select("*")
-            .eq("status", "available")
-            .execute()
-        )
-        return response.data or []
+        try:
+            response = (
+                self.client.table("property_cards")
+                .select("*")
+                .in_("status", list(ACTIVE_STATUSES))
+                .execute()
+            )
+            return response.data or []
+        except Exception:
+            response = self.client.table("property_cards").select("*").execute()
+            cards = response.data or []
+            return [card for card in cards if self._is_available_row(card)]
+
+    def _is_available_row(self, card: dict) -> bool:
+        """Filtro Python defensivo para estados activos."""
+
+        status = str(card.get("status") or "").strip().lower()
+        is_active = card.get("is_active")
+
+        if is_active is False:
+            return False
+        if status in INACTIVE_STATUSES:
+            return False
+        if status and status not in ACTIVE_STATUSES:
+            return False
+        return True
 
     def find_card_by_id(self, property_id: str) -> dict | None:
         """Busca una propiedad por UUID."""
@@ -47,6 +70,21 @@ class PropertyRepository:
         )
         rows = response.data or []
         return rows[0] if rows else None
+
+    def get_liked_cards(self, user_id: str) -> list[dict]:
+        """Devuelve tarjetas que el usuario marcó como like."""
+
+        liked_ids = self.swipes.list_liked_property_ids(user_id)
+        if not liked_ids:
+            return []
+
+        response = (
+            self.client.table("property_cards")
+            .select("*")
+            .in_("id", list(liked_ids))
+            .execute()
+        )
+        return response.data or []
 
     def get_last_liked_zone(self, user_id: str) -> str | None:
         """Obtiene la última zona likeada para priorizar el mazo."""
@@ -66,7 +104,11 @@ class PropertyRepository:
         page: int,
         page_size: int,
     ) -> tuple[list[dict], int]:
-        """Lista propiedades recomendadas/no vistas según preferencias."""
+        """Compatibilidad legacy: lista propiedades simples por preferencias.
+
+        La ruta nueva de Fase 6 usa RecommendationService. Este método queda
+        como fallback si algún import antiguo sigue llamándolo.
+        """
 
         preferences = self.preferences.get_user_preferences(user_id)
         if not preferences:
@@ -87,7 +129,7 @@ class PropertyRepository:
                 continue
             if str(card.get("operation_type", "")).lower() != operation_type.lower():
                 continue
-            if float(card.get("price") or 0) > max_budget:
+            if max_budget > 0 and float(card.get("price") or 0) > max_budget:
                 continue
             candidates.append(card)
 

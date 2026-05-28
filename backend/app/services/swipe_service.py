@@ -3,6 +3,7 @@
 from fastapi import HTTPException, status
 
 from app.api.dependencies import CurrentUser
+from app.domain.recommendation.scoring import is_property_available
 from app.infrastructure.repositories.match_repo import MatchRepository
 from app.infrastructure.repositories.property_repo import PropertyRepository
 from app.infrastructure.repositories.swipe_repo import SwipeRepository
@@ -36,23 +37,36 @@ class SwipeService:
                 detail="El inmueble no existe.",
             )
 
+        if not is_property_available(row):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="La propiedad ya no está disponible.",
+            )
+
+        owner_id = str(row.get("owner_id") or "")
+        if owner_id and owner_id == current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No puedes hacer swipe sobre una propiedad propia.",
+            )
+
         self.swipe_repository.upsert_swipe(
             user_id=current_user.id,
             property_id=request.property_id,
             action=request.action,
         )
 
-        is_match = False
-        if request.action == "like":
-            owner_id = str(row.get("owner_id") or "")
-            if owner_id:
-                self.match_repository.upsert_match(
-                    buyer_id=current_user.id,
-                    owner_id=owner_id,
-                    property_id=request.property_id,
-                )
-                is_match = True
-        else:
+        created_match = False
+        match_id: str | None = None
+
+        if request.action == "like" and owner_id:
+            match_id = self.match_repository.upsert_match(
+                buyer_id=current_user.id,
+                owner_id=owner_id,
+                property_id=request.property_id,
+            )
+            created_match = True
+        elif request.action == "nope":
             self.match_repository.delete_match(
                 buyer_id=current_user.id,
                 property_id=request.property_id,
@@ -62,5 +76,7 @@ class SwipeService:
             message="Interacción procesada correctamente.",
             property_id=request.property_id,
             action=request.action,
-            is_match=is_match,
+            is_match=created_match,
+            created_match=created_match,
+            match_id=match_id,
         )

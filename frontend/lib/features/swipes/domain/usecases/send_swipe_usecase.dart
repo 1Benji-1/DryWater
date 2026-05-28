@@ -1,3 +1,4 @@
+import '../entities/swipe_result.dart';
 import '../repositories/swipe_repository.dart';
 
 class SendSwipeUseCase {
@@ -5,7 +6,7 @@ class SendSwipeUseCase {
 
   const SendSwipeUseCase(this._repository);
 
-  Future<void> call({
+  Future<SwipeResult> call({
     required String propertyId,
     required String action,
   }) {

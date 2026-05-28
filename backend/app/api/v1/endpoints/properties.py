@@ -9,13 +9,24 @@ from app.services.property_service import PropertyService
 router = APIRouter()
 
 
+@router.get("/properties/recommendations", response_model=PropertyListResponse)
+async def obtener_recomendaciones(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    current_user: CurrentUser = Depends(get_current_user),
+) -> PropertyListResponse:
+    """Obtiene recomendaciones reales con exclusiones y scoring."""
+
+    return PropertyService().list_recommendations(current_user, page, page_size)
+
+
 @router.get("/properties", response_model=PropertyListResponse)
 async def obtener_propiedades(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     current_user: CurrentUser = Depends(get_current_user),
 ) -> PropertyListResponse:
-    """Obtiene propiedades no vistas del usuario autenticado."""
+    """Alias compatible: devuelve el mismo feed recomendado."""
 
     return PropertyService().list_for_user(current_user, page, page_size)
 

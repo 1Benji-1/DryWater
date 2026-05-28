@@ -9,25 +9,50 @@ class MatchRepository:
     def __init__(self):
         self.client = get_supabase_client()
 
-    def upsert_match(self, buyer_id: str, owner_id: str, property_id: str) -> None:
-        """Crea o mantiene activo un match."""
+    def upsert_match(self, buyer_id: str, owner_id: str, property_id: str) -> str | None:
+        """Crea o mantiene activo un match y devuelve su ID si Supabase lo retorna."""
 
-        self.client.table("matches").upsert(
-            {
-                "buyer_id": buyer_id,
+        payload = {
+            "buyer_id": buyer_id,
+            "owner_id": owner_id,
+            "property_id": property_id,
+            "status": "active",
+        }
+
+        try:
+            response = (
+                self.client.table("matches")
+                .upsert(payload, on_conflict="buyer_id,property_id")
+                .execute()
+            )
+        except Exception:
+            # Compatibilidad con esquemas que usen user_id en vez de buyer_id.
+            fallback_payload = {
+                "user_id": buyer_id,
                 "owner_id": owner_id,
                 "property_id": property_id,
                 "status": "active",
-            },
-            on_conflict="buyer_id,property_id",
-        ).execute()
+            }
+            response = (
+                self.client.table("matches")
+                .upsert(fallback_payload, on_conflict="user_id,property_id")
+                .execute()
+            )
+
+        rows = response.data or []
+        return str(rows[0].get("id")) if rows and rows[0].get("id") else None
 
     def delete_match(self, buyer_id: str, property_id: str) -> None:
         """Elimina match cuando el swipe cambia a nope."""
 
-        self.client.table("matches").delete().eq("buyer_id", buyer_id).eq(
-            "property_id", property_id
-        ).execute()
+        try:
+            self.client.table("matches").delete().eq("buyer_id", buyer_id).eq(
+                "property_id", property_id
+            ).execute()
+        except Exception:
+            self.client.table("matches").delete().eq("user_id", buyer_id).eq(
+                "property_id", property_id
+            ).execute()
 
     def list_match_cards(
         self,
@@ -82,7 +107,7 @@ class MatchRepository:
         )
         matches = response.data or []
         property_ids = [str(row["property_id"]) for row in matches]
-        buyer_ids = [str(row["buyer_id"]) for row in matches]
+        buyer_ids = [str(row.get("buyer_id") or row.get("user_id")) for row in matches]
 
         cards_by_id = {}
         if property_ids:
@@ -97,11 +122,12 @@ class MatchRepository:
             }
 
         buyers_by_id = {}
-        if buyer_ids:
+        clean_buyer_ids = [buyer_id for buyer_id in buyer_ids if buyer_id]
+        if clean_buyer_ids:
             buyers_response = (
                 self.client.table("profiles")
                 .select("*")
-                .in_("id", buyer_ids)
+                .in_("id", clean_buyer_ids)
                 .execute()
             )
             buyers_by_id = {
@@ -111,7 +137,7 @@ class MatchRepository:
         enriched = []
         for match in matches:
             property_id = str(match.get("property_id"))
-            buyer_id = str(match.get("buyer_id"))
+            buyer_id = str(match.get("buyer_id") or match.get("user_id"))
             card = cards_by_id.get(property_id)
             buyer = buyers_by_id.get(buyer_id, {})
             if not card:
@@ -148,7 +174,8 @@ class MatchRepository:
             return False
 
         match = rows[0]
-        if user_id not in {str(match.get("buyer_id")), str(match.get("owner_id"))}:
+        buyer_id = str(match.get("buyer_id") or match.get("user_id"))
+        if user_id not in {buyer_id, str(match.get("owner_id"))}:
             return False
 
         self.client.table("matches").update({"status": status}).eq(

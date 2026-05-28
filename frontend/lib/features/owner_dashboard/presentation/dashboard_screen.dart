@@ -6,13 +6,15 @@ import '../../properties/domain/entities/property.dart';
 import '../../../providers/property_provider.dart';
 import '../../../core/router/route_names.dart';
 import '../../../services/api_service.dart';
+import '../../auth/presentation/providers/auth_controller.dart';
 
-final profileProvider = FutureProvider<UserProfile>((ref) async {
+final profileProvider = FutureProvider.autoDispose<UserProfile>((ref) async {
+  ref.watch(currentAuthStateProvider);
   final api = ref.watch(apiServiceProvider);
   return api.fetchProfile();
 });
 
-final matchesProvider = FutureProvider<List<Property>>((ref) async {
+final matchesProvider = FutureProvider.autoDispose<List<Property>>((ref) async {
   final profile = await ref.watch(profileProvider.future);
   if (profile.id.isEmpty) return [];
 
@@ -20,7 +22,7 @@ final matchesProvider = FutureProvider<List<Property>>((ref) async {
   return api.fetchMatches();
 });
 
-final ownerPropertiesProvider = FutureProvider<List<Property>>((ref) async {
+final ownerPropertiesProvider = FutureProvider.autoDispose<List<Property>>((ref) async {
   final profile = await ref.watch(profileProvider.future);
   if (!profile.isOwnerOrAdmin) return [];
 
@@ -28,7 +30,7 @@ final ownerPropertiesProvider = FutureProvider<List<Property>>((ref) async {
   return api.fetchOwnerProperties();
 });
 
-final ownerMatchesProvider = FutureProvider<List<OwnerMatchItem>>((ref) async {
+final ownerMatchesProvider = FutureProvider.autoDispose<List<OwnerMatchItem>>((ref) async {
   final profile = await ref.watch(profileProvider.future);
   if (!profile.isOwnerOrAdmin) return [];
 

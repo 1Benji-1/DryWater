@@ -26,6 +26,8 @@ def _to_string_list(value: object) -> list[str]:
     if isinstance(value, str):
         if "|" in value:
             return [item.strip() for item in value.split("|") if item.strip()]
+        if "," in value:
+            return [item.strip() for item in value.split(",") if item.strip()]
         if value.strip():
             return [value.strip()]
 
@@ -45,6 +47,7 @@ class PropertySummaryResponse(BaseModel):
     zone: str = Field(..., examples=["Equipetrol"])
     image_url: str = Field(..., examples=[PLACEHOLDER_IMAGE_URL])
     amenities: list[str] = Field(default_factory=list)
+    score: float | None = Field(default=None, ge=0, le=1)
 
     @classmethod
     def from_supabase_row(cls, row: dict) -> "PropertySummaryResponse":
@@ -54,6 +57,7 @@ class PropertySummaryResponse(BaseModel):
         zone = str(row.get("zone") or "Sin zona")
         amenities = _to_string_list(row.get("amenities"))
         image_url = str(row.get("image_url") or PLACEHOLDER_IMAGE_URL)
+        score = row.get("score")
 
         return cls(
             id=str(row.get("id")),
@@ -69,6 +73,7 @@ class PropertySummaryResponse(BaseModel):
             zone=zone,
             image_url=image_url,
             amenities=amenities,
+            score=_to_float(score) if score is not None else None,
         )
 
 

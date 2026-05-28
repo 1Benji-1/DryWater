@@ -23,6 +23,6 @@ final apiServiceProvider = Provider<ApiService>((ref) {
 ///
 /// La identidad ya no viene de un user_id manual.
 /// El backend obtiene el usuario desde Authorization: Bearer <token>.
-final propertiesProvider = FutureProvider<List<Property>>((ref) async {
+final propertiesProvider = FutureProvider.autoDispose<List<Property>>((ref) async {
   return ref.watch(propertyFeedProvider.future);
 });

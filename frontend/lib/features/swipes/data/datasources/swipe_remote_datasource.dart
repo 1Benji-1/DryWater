@@ -1,4 +1,5 @@
 import '../../../../services/api_service.dart';
+import '../../domain/entities/swipe_result.dart';
 
 class SwipeRemoteDataSource {
   final ApiService _apiService;
@@ -7,7 +8,7 @@ class SwipeRemoteDataSource {
     ApiService? apiService,
   }) : _apiService = apiService ?? ApiService();
 
-  Future<void> sendSwipe({
+  Future<SwipeResult> sendSwipe({
     required String propertyId,
     required String action,
   }) {

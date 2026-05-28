@@ -7,6 +7,8 @@ import '../../../../core/router/route_names.dart';
 import '../../../../providers/property_provider.dart';
 import '../../../auth/presentation/providers/auth_controller.dart';
 import '../../../swipes/presentation/providers/swipe_controller.dart';
+import '../../../owner_dashboard/presentation/dashboard_screen.dart';
+import '../providers/property_feed_controller.dart';
 import '../widgets/property_card.dart';
 
 class PropertyFeedScreen extends ConsumerWidget {
@@ -15,6 +17,7 @@ class PropertyFeedScreen extends ConsumerWidget {
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
     await ref.read(signOutUseCaseProvider).call();
 
+    ref.invalidate(propertyFeedProvider);
     ref.invalidate(propertiesProvider);
 
     if (!context.mounted) return;
@@ -29,7 +32,16 @@ class PropertyFeedScreen extends ConsumerWidget {
     final useCase = ref.read(sendSwipeUseCaseProvider);
 
     try {
-      await useCase(propertyId: propertyId, action: action);
+      final result = await useCase(propertyId: propertyId, action: action);
+
+      // NO invalidar el feed aquí.
+      // El swiper ya avanza localmente la tarjeta.
+      // Si recargamos recomendaciones justo después del swipe, el backend
+      // excluye la propiedad vista y la pantalla puede quedar vacía al volver
+      // desde Matches.
+      if (action == 'like' || result.isMatch || result.createdMatch) {
+        ref.invalidate(matchesProvider);
+      }
     } catch (error) {
       debugPrint('Error enviando swipe: $error');
     }

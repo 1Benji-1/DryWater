@@ -14,11 +14,12 @@ class SwipeRequest(BaseModel):
 
 
 class SwipeResponse(BaseModel):
-    """Resultado de procesar un swipe."""
+    """Resultado de procesar un swipe real."""
 
     status: str = Field(default="success")
     message: str
     property_id: str
     action: Literal["like", "nope"]
     is_match: bool = Field(default=False)
-
+    created_match: bool = Field(default=False)
+    match_id: str | None = Field(default=None)

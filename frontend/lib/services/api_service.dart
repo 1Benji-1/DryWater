@@ -7,6 +7,7 @@ import '../core/network/paginated_response.dart';
 import '../features/market/data/dto/market_evaluation_dto.dart';
 import '../features/properties/data/dto/property_dto.dart';
 import '../features/properties/domain/entities/property.dart';
+import '../features/swipes/domain/entities/swipe_result.dart';
 
 /// Cliente HTTP centralizado para FastAPI.
 class ApiService {
@@ -103,7 +104,7 @@ class ApiService {
   Future<List<Property>> fetchProperties() async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
-        '/api/v1/properties',
+        '/api/v1/properties/recommendations',
         queryParameters: {
           'page': 1,
           'page_size': AppConstants.defaultPageSize,
@@ -135,18 +136,20 @@ class ApiService {
     }
   }
 
-  Future<void> sendSwipeAction(
+  Future<SwipeResult> sendSwipeAction(
     String propertyId,
     String action,
   ) async {
     try {
-      await _dio.post<Map<String, dynamic>>(
+      final response = await _dio.post<Map<String, dynamic>>(
         '/api/v1/swipes',
         data: {
           'property_id': propertyId,
           'action': action,
         },
       );
+
+      return SwipeResult.fromJson(response.data ?? <String, dynamic>{});
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
     }

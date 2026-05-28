@@ -1,5 +1,7 @@
+import '../entities/swipe_result.dart';
+
 abstract class SwipeRepository {
-  Future<void> sendSwipe({
+  Future<SwipeResult> sendSwipe({
     required String propertyId,
     required String action,
   });

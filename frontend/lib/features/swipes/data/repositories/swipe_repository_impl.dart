@@ -1,3 +1,4 @@
+import '../../domain/entities/swipe_result.dart';
 import '../../domain/repositories/swipe_repository.dart';
 import '../datasources/swipe_remote_datasource.dart';
 
@@ -9,7 +10,7 @@ class SwipeRepositoryImpl implements SwipeRepository {
   }) : _remoteDataSource = remoteDataSource;
 
   @override
-  Future<void> sendSwipe({
+  Future<SwipeResult> sendSwipe({
     required String propertyId,
     required String action,
   }) {
