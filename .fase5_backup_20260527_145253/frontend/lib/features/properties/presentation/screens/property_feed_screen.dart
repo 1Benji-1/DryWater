@@ -2,10 +2,10 @@ import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/router/route_names.dart';
 import '../../../../providers/property_provider.dart';
-import '../../../auth/presentation/providers/auth_controller.dart';
 import '../../../swipes/presentation/providers/swipe_controller.dart';
 import '../widgets/property_card.dart';
 
@@ -13,9 +13,10 @@ class PropertyFeedScreen extends ConsumerWidget {
   const PropertyFeedScreen({super.key});
 
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
-    await ref.read(signOutUseCaseProvider).call();
+    await Supabase.instance.client.auth.signOut();
 
     ref.invalidate(propertiesProvider);
+    ref.invalidate(userIdProvider);
 
     if (!context.mounted) return;
     context.go(RouteNames.login);

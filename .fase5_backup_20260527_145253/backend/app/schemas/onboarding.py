@@ -14,4 +14,6 @@ class OnboardingResponse(BaseModel):
 
     status: str = Field(default="success")
     message: str
+    user_id: str
     available_properties: int = Field(default=0, ge=0)
+

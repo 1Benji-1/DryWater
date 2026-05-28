@@ -13,8 +13,8 @@ final profileProvider = FutureProvider<UserProfile>((ref) async {
 });
 
 final matchesProvider = FutureProvider<List<Property>>((ref) async {
-  final profile = await ref.watch(profileProvider.future);
-  if (profile.id.isEmpty) return [];
+  final userId = ref.watch(userIdProvider);
+  if (userId.isEmpty) return [];
 
   final api = ref.watch(apiServiceProvider);
   return api.fetchMatches();

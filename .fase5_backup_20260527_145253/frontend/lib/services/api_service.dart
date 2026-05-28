@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/network/api_exception.dart';
@@ -14,10 +15,27 @@ class ApiService {
 
   final Dio _dio;
 
+  Options _authOptions() {
+    final token = Supabase.instance.client.auth.currentSession?.accessToken;
+
+    if (token == null || token.isEmpty) {
+      throw const ApiException(
+        message: 'Sesión expirada. Inicia sesión nuevamente.',
+      );
+    }
+
+    return Options(
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+  }
+
   Future<UserProfile> fetchProfile() async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/v1/me',
+        options: _authOptions(),
       );
 
       return UserProfile.fromJson(response.data ?? <String, dynamic>{});
@@ -33,6 +51,7 @@ class ApiService {
     try {
       final response = await _dio.patch<Map<String, dynamic>>(
         '/api/v1/me',
+        options: _authOptions(),
         data: {
           if (fullName != null) 'full_name': fullName,
           if (phone != null) 'phone': phone,
@@ -49,6 +68,7 @@ class ApiService {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/api/v1/me/become-owner',
+        options: _authOptions(),
       );
 
       final data = response.data ?? <String, dynamic>{};
@@ -72,6 +92,7 @@ class ApiService {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/api/v1/onboarding',
+        options: _authOptions(),
         data: {
           'budget': budget,
           'operation_type': operationType,
@@ -89,6 +110,7 @@ class ApiService {
     try {
       final response = await _dio.get<List<dynamic>>(
         '/api/v1/amenities',
+        options: _authOptions(),
       );
 
       return (response.data ?? const [])
@@ -104,6 +126,7 @@ class ApiService {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/v1/properties',
+        options: _authOptions(),
         queryParameters: {
           'page': 1,
           'page_size': AppConstants.defaultPageSize,
@@ -127,6 +150,7 @@ class ApiService {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/v1/properties/$propertyId',
+        options: _authOptions(),
       );
 
       return PropertyDetailData.fromJson(response.data ?? <String, dynamic>{});
@@ -142,6 +166,7 @@ class ApiService {
     try {
       await _dio.post<Map<String, dynamic>>(
         '/api/v1/swipes',
+        options: _authOptions(),
         data: {
           'property_id': propertyId,
           'action': action,
@@ -161,6 +186,7 @@ class ApiService {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/api/v1/market/evaluate',
+        options: _authOptions(),
         data: {
           'price': price,
           'operation_type': operationType,
@@ -181,6 +207,7 @@ class ApiService {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/v1/matches',
+        options: _authOptions(),
         queryParameters: {
           'page': 1,
           'page_size': AppConstants.defaultPageSize,
@@ -206,6 +233,7 @@ class ApiService {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/api/v1/owner/properties',
+        options: _authOptions(),
         data: input.toJson(),
       );
 
@@ -219,6 +247,7 @@ class ApiService {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/v1/owner/properties',
+        options: _authOptions(),
         queryParameters: {
           'page': 1,
           'page_size': AppConstants.defaultPageSize,
@@ -245,6 +274,7 @@ class ApiService {
     try {
       await _dio.patch<Map<String, dynamic>>(
         '/api/v1/owner/properties/$propertyId/status',
+        options: _authOptions(),
         data: {
           'status': status,
         },
@@ -258,6 +288,7 @@ class ApiService {
     try {
       await _dio.delete<Map<String, dynamic>>(
         '/api/v1/owner/properties/$propertyId',
+        options: _authOptions(),
       );
     } on DioException catch (error) {
       throw ApiException.fromDio(error);
@@ -268,6 +299,7 @@ class ApiService {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/api/v1/owner/matches',
+        options: _authOptions(),
         queryParameters: {
           'page': 1,
           'page_size': AppConstants.defaultPageSize,
@@ -294,6 +326,7 @@ class ApiService {
     try {
       await _dio.patch<Map<String, dynamic>>(
         '/api/v1/matches/$matchId/status',
+        options: _authOptions(),
         data: {
           'status': status,
         },

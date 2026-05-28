@@ -30,13 +30,12 @@ class OnboardingService:
             operation_type=request.operation_type,
             preferred_zone=request.preferred_zone,
         )
-
         available = self.property_repository.count_available_for_preferences(
             max_budget=request.budget,
             operation_type=request.operation_type,
         )
-
         return OnboardingResponse(
             message="Perfil inicial creado con éxito.",
+            user_id=current_user.id,
             available_properties=available,
         )

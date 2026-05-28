@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/constants/app_constants.dart';
-import '../../../../services/api_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -22,13 +21,6 @@ class _AuthScreenState extends State<AuthScreen> {
   String? _successMessage;
 
   SupabaseClient get _supabase => Supabase.instance.client;
-
-  Future<void> _syncProfileIfSessionExists() async {
-    final session = _supabase.auth.currentSession;
-    if (session == null) return;
-
-    await ApiService().fetchProfile();
-  }
 
   @override
   void dispose() {
@@ -76,7 +68,6 @@ class _AuthScreenState extends State<AuthScreen> {
           email: email,
           password: password,
         );
-        await _syncProfileIfSessionExists();
       } else {
         await _supabase.auth.signUp(
           email: email,
@@ -86,8 +77,6 @@ class _AuthScreenState extends State<AuthScreen> {
             'full_name': fullName.isEmpty ? email.split('@').first : fullName,
           },
         );
-
-        await _syncProfileIfSessionExists();
 
         if (_supabase.auth.currentSession == null) {
           setState(() {

@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/router/route_names.dart';
 import '../../../../providers/property_provider.dart';
-import '../../../auth/presentation/providers/auth_controller.dart';
 import '../../domain/entities/onboarding_preferences.dart';
 import '../providers/onboarding_controller.dart';
 
@@ -88,8 +87,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _signOut() async {
-    await ref.read(signOutUseCaseProvider).call();
-    ref.invalidate(propertiesProvider);
+    await Supabase.instance.client.auth.signOut();
 
     if (!mounted) return;
     context.go(RouteNames.login);
