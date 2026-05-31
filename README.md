@@ -13,6 +13,14 @@
 
 ---
 
+## 👤 Integrantes:
+- Cristopher Naid Carballo Lopez
+- Yoel Bulacia Vaca
+- Esther Ruth Guzman Colque
+- Patricia Rodriguez Ramirez
+- Jhoel Arturo Villarroel Rocha
+- Robert Leonardo Yujra
+
 ## 📖 Sobre el Proyecto
 
 **AgroPros** es una plataforma móvil y backend diseñada específicamente para empoderar a los agricultores y productores agropecuarios. A través de la recolección de datos climáticos en tiempo real y el uso de Inteligencia Artificial (Anthropic/OpenAI), la aplicación proporciona alertas tempranas, pronósticos adaptados al tipo de cultivo y recomendaciones preventivas para proteger la producción.
