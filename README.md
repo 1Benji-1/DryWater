@@ -140,7 +140,7 @@ flutter devices
 flutter run
 ```
 
-### 3. ¡Empieza a Usar AgroPros!
+### 3. ¡Empieza a Usar DryWater!
 1. Una vez la app abra, si eres un usuario nuevo, verás las pantallas de introducción (Onboarding).
 2. Toca en **"Crear Cuenta"** y regístrate con tu correo y seleccionando el tipo de cultivo que produces.
 3. Serás dirigido al **Dashboard**, donde la aplicación mostrará automáticamente las recomendaciones de clima generadas por Inteligencia Artificial para tu cosecha.
