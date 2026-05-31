@@ -1,99 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/router/route_names.dart';
-import '../../../../providers/property_provider.dart';
-import '../../../auth/presentation/providers/auth_controller.dart';
-import '../../../properties/presentation/providers/property_feed_controller.dart';
-import '../../domain/entities/onboarding_preferences.dart';
-import '../providers/onboarding_controller.dart';
 
-class OnboardingScreen extends ConsumerStatefulWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  final TextEditingController _budgetController = TextEditingController();
-
-  String _operationType = 'Alquiler';
-  String _preferredZone = 'Equipetrol';
-  String? _errorMessage;
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  String _preferredZone = 'Santa Cruz';
   bool _isLoading = false;
 
   final List<String> _zones = const [
-    'Equipetrol',
-    'Centro',
-    'Zona Norte',
-    'Urubó',
-    'Zona Sur',
+    'Santa Cruz',
+    'La Paz',
+    'Cochabamba',
+    'Tarija',
+    'Pando',
   ];
 
-  @override
-  void dispose() {
-    _budgetController.dispose();
-    super.dispose();
-  }
-
   Future<void> _submit() async {
-    final budget = double.tryParse(_budgetController.text.trim()) ?? 0.0;
-
-    if (budget <= 0) {
-      setState(() {
-        _errorMessage = 'Por favor ingresa un presupuesto válido.';
-      });
-      return;
-    }
-
     setState(() {
-      _errorMessage = null;
       _isLoading = true;
     });
 
-    try {
-      final useCase = ref.read(savePreferencesUseCaseProvider);
-      final saved = await useCase(
-        OnboardingPreferences(
-          budget: budget,
-          operationType: _operationType,
-          preferredZone: _preferredZone,
-        ),
-      );
+    // Simulando el guardado de la preferencia de zona en MVP
+    await Future.delayed(const Duration(milliseconds: 500));
 
-      if (!saved) {
-        setState(() {
-          _errorMessage = 'No se pudo guardar tu perfil inicial.';
-        });
-        return;
-      }
-
-      ref.invalidate(propertyFeedProvider);
-      ref.invalidate(propertyFeedProvider);
-    ref.invalidate(propertiesProvider);
-
-      if (!mounted) return;
-      context.go(RouteNames.home);
-    } catch (error) {
-      setState(() {
-        _errorMessage = error.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    if (!mounted) return;
+    context.go(RouteNames.dashboard);
   }
 
   Future<void> _signOut() async {
-    await ref.read(signOutUseCaseProvider).call();
-    ref.invalidate(propertiesProvider);
-
+    await Supabase.instance.client.auth.signOut();
     if (!mounted) return;
     context.go(RouteNames.login);
   }
@@ -101,11 +44,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final userEmail = Supabase.instance.client.auth.currentUser?.email;
-    final userLabel = userEmail ?? 'usuario autenticado';
+    final userLabel = userEmail ?? 'usuario';
 
     return Scaffold(
+      backgroundColor: const Color(0xFFC3E7C9),
       appBar: AppBar(
-        title: const Text('Preferencias iniciales'),
+        title: const Text('Configuración Inicial'),
+        backgroundColor: const Color(0xFF10471D),
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             tooltip: 'Cerrar sesión',
@@ -117,17 +63,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: Center(
         child: Container(
           width: 430,
-          padding: const EdgeInsets.all(24),
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 20,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.home_work, size: 72, color: Colors.blue),
+                const Icon(Icons.cloud_queue, size: 72, color: Color(0xFF246D34)),
                 const SizedBox(height: 16),
                 const Text(
-                  'Configura tu búsqueda',
+                  'Bienvenido a DryWater',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF10471D)),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -135,91 +93,61 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey[700]),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
                 const Text(
-                  '¿Qué buscas?',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  '¿Qué zona deseas monitorear?',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF10471D)),
                 ),
-                Row(
-                  children: [
-                    Radio<String>(
-                      value: 'Alquiler',
-                      groupValue: _operationType,
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: const Color(0xFFD2ECD9)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _preferredZone,
+                      isExpanded: true,
+                      icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF246D34)),
+                      items: _zones.map((zone) {
+                        return DropdownMenuItem<String>(
+                          value: zone,
+                          child: Text(zone),
+                        );
+                      }).toList(),
                       onChanged: _isLoading
                           ? null
                           : (value) {
-                              setState(
-                                () => _operationType = value ?? 'Alquiler',
-                              );
+                              if (value != null) {
+                                setState(() => _preferredZone = value);
+                              }
                             },
                     ),
-                    const Text('Alquiler'),
-                    Radio<String>(
-                      value: 'Venta',
-                      groupValue: _operationType,
-                      onChanged: _isLoading
-                          ? null
-                          : (value) {
-                              setState(() => _operationType = value ?? 'Venta');
-                            },
-                    ),
-                    const Text('Comprar'),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: _budgetController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Tu presupuesto máximo (Bs)',
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Zona de inicio preferida:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                DropdownButton<String>(
-                  value: _preferredZone,
-                  isExpanded: true,
-                  items: _zones.map((zone) {
-                    return DropdownMenuItem<String>(
-                      value: zone,
-                      child: Text(zone),
-                    );
-                  }).toList(),
-                  onChanged: _isLoading
-                      ? null
-                      : (value) {
-                          if (value != null) {
-                            setState(() => _preferredZone = value);
-                          }
-                        },
-                ),
-                const SizedBox(height: 24),
-                if (_errorMessage != null) ...[
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
-                  child: Padding(
-                    padding: const EdgeInsets.all(15),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Ingresar al feed'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10471D),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text(
+                          'Ir al DryWater',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ],
             ),

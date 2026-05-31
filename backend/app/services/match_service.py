@@ -3,10 +3,12 @@
 from fastapi import HTTPException, status
 
 from app.api.dependencies import CurrentUser
+from app.domain.matches.match_status import is_valid_match_status
 from app.infrastructure.repositories.match_repo import MatchRepository
 from app.schemas.common import SuccessResponse
-from app.schemas.match import MatchListResponse
-from app.schemas.owner_property import (
+from app.schemas.match import (
+    MatchItemResponse,
+    MatchListResponse,
     MatchStatusUpdateRequest,
     OwnerMatchListResponse,
     OwnerMatchResponse,
@@ -27,24 +29,54 @@ class MatchService:
         self.repository = repository or MatchRepository()
         self.profile_service = profile_service or ProfileService()
 
+    def _build_buyer_item(self, row: dict) -> MatchItemResponse:
+        """Construye item de match para buyer desde fila enriquecida."""
+
+        return MatchItemResponse(
+            match_id=row["match_id"],
+            status=row["status"],
+            owner_id=row.get("owner_id"),
+            owner_name=row.get("owner_name"),
+            owner_phone=row.get("owner_phone"),
+            property=PropertySummaryResponse.from_supabase_row(row["property"]),
+        )
+
     def list_buyer_matches(
         self,
         current_user: CurrentUser,
         page: int,
         page_size: int,
     ) -> MatchListResponse:
-        """Devuelve propiedades likeadas por el usuario autenticado."""
+        """Devuelve matches reales del usuario autenticado."""
 
         rows, total = self.repository.list_match_cards(
             user_id=current_user.id,
             page=page,
             page_size=page_size,
         )
-        items = [PropertySummaryResponse.from_supabase_row(row) for row in rows]
+        items = [self._build_buyer_item(row) for row in rows]
         return MatchListResponse(
             items=items,
             pagination=build_pagination(page, page_size, total),
         )
+
+    def get_match_detail(
+        self,
+        current_user: CurrentUser,
+        match_id: str,
+    ) -> MatchItemResponse:
+        """Devuelve detalle del match para contacto."""
+
+        row = self.repository.get_buyer_match_detail(
+            user_id=current_user.id,
+            match_id=match_id,
+        )
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="El match no existe o no te pertenece.",
+            )
+        return self._build_buyer_item(row)
 
     def list_owner_matches(
         self,
@@ -67,6 +99,7 @@ class MatchService:
                 buyer_id=row["buyer_id"],
                 buyer_name=row.get("buyer_name"),
                 buyer_email=row.get("buyer_email"),
+                buyer_phone=row.get("buyer_phone"),
                 property=PropertySummaryResponse.from_supabase_row(row["property"]),
             )
             for row in rows
@@ -83,6 +116,12 @@ class MatchService:
         request: MatchStatusUpdateRequest,
     ) -> SuccessResponse:
         """Actualiza estado active/contacted/archived."""
+
+        if not is_valid_match_status(request.status):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Estado de match inválido.",
+            )
 
         updated = self.repository.update_match_status(
             user_id=current_user.id,

@@ -14,12 +14,13 @@ class AuthGuard {
   static String? redirect(GoRouterState state) {
     final path = state.uri.path;
     final goingToLogin = path == RouteNames.login;
+    final goingToIntro = path == RouteNames.intro;
 
-    if (!isAuthenticated && !goingToLogin) {
+    if (!isAuthenticated && !goingToLogin && !goingToIntro) {
       return RouteNames.login;
     }
 
-    if (isAuthenticated && goingToLogin) {
+    if (isAuthenticated && (goingToLogin || goingToIntro)) {
       return RouteNames.onboarding;
     }
 

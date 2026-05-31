@@ -62,3 +62,5 @@ Thumbs.db
 # REPOMIX
 # =========================
 repomix-output.xml
+run_backend.ps1
+run_frontend_chrome.ps1
