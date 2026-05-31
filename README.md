@@ -1,4 +1,4 @@
-<h1 align="center">🌾 AgroPros</h1>
+<h1 align="center">💧 DryWater</h1>
 
 <p align="center">
   <strong>El asistente inteligente definitivo para el sector agropecuario, impulsado por Inteligencia Artificial y Análisis Predictivo.</strong>
